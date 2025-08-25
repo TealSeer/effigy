@@ -44,6 +44,8 @@
 		wield_callback = CALLBACK(src, PROC_REF(on_wielded)),\
 		unwield_callback = CALLBACK(src, PROC_REF(on_unwielded)),\
 	)
+	AddElement(/datum/element/burn_on_item_ignition)
+	RegisterSignal(src, COMSIG_ATOM_IGNITED_BY_ITEM, PROC_REF(close_paper_ui))
 	creation_time = GLOB.news_network.last_action
 	for(var/datum/feed_channel/iterated_feed_channel in GLOB.news_network.network_channels)
 		news_content += iterated_feed_channel

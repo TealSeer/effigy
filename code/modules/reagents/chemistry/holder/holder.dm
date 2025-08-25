@@ -328,6 +328,7 @@
  * * conversion_volume - how much of the reagent volume to convert. -1 for all
  * * multiplier - the multiplier applied on the source_reagent_typepath volume before converting
  * * include_source_subtypes- if TRUE will convert all subtypes of source_reagent_typepath into target_reagent_typepath as well
+ * * keep_data - works only when include_source_subtypes is FALSE. Transfers over the data of the converted reagent
  */
 /datum/reagents/proc/convert_reagent(
 	datum/reagent/source_reagent_typepath,
@@ -343,6 +344,10 @@
 	if(!ispath(target_reagent_typepath))
 		stack_trace("invalid reagent path passed to convert reagent [target_reagent_typepath]")
 		return FALSE
+	if(conversion_volume <= 0 || conversion_volume > total_volume)
+		stack_trace("conversion volume [conversion_volume] out of bounds range is 0<value<=[total_volume]")
+		return FALSE
+	keep_data = keep_data && !include_source_subtypes
 
 	var/weighted_volume = 0
 	var/weighted_purity = 0
@@ -373,9 +378,20 @@
 
 		//compute average of everything
 		reagent_volume = cached_reagent.volume
+		if(cached_reagent.volume > conversion_volume)
+			reagent_volume = conversion_volume
+			cached_reagent.volume -= conversion_volume
+			conversion_volume = 0
+		else
+			conversion_volume -= cached_reagent.volume
+			cached_reagent.volume = 0
+
+		//compute average of everything. preserve data if nessassary
 		weighted_purity += cached_reagent.purity * reagent_volume
 		weighted_ph += cached_reagent.ph * reagent_volume
 		weighted_volume += reagent_volume
+		if(keep_data)
+			reagent_data = copy_data(cached_reagent)
 
 		//zero the volume out so it gets removed
 		cached_reagent.volume = 0
